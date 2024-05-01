@@ -19,7 +19,7 @@ export default function ExpenseModal() {
         <Dialog
           as='div'
           className='relative z-10'
-          onClose={() => dispatch({ type: 'show-modal' })}
+          onClose={() => dispatch({ type: 'close-modal' })}
         >
           <Transition.Child
             as={Fragment}

@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-calendar/dist/Calendar.css';
 import DatePicker from 'react-date-picker';
 import 'react-date-picker/dist/DatePicker.css';
 import { categories } from '../data/categories';
+import { useBudget } from '../hooks/useBudget';
 import { DraftExpense, Value } from '../types';
 import ErrorMessage from './ErrorMessage';
-import { useBudget } from '../hooks/useBudget';
 
 const ExpenseForm = () => {
   const [expense, setExpense] = useState<DraftExpense>({
@@ -17,7 +17,16 @@ const ExpenseForm = () => {
 
   const [error, setError] = useState('');
 
-  const {dispatch} = useBudget();
+  const { dispatch, state } = useBudget();
+
+  useEffect(() => {
+    if (state.editingId) {
+      const editingExpense = state.expenses.filter(
+        currentExpense => currentExpense.id === state.editingId
+      )[0];
+      setExpense(editingExpense);
+    }
+  }, [state.editingId]);
 
   const handleChange = (
     e:
@@ -41,22 +50,29 @@ const ExpenseForm = () => {
       return;
     }
 
-    //Agregar nuevo gasto
-    dispatch({ type: 'add-expense', payload: { expense } });
+    //Agregar o actualizar  gasto
+    if (state.editingId) {
+      dispatch({
+        type: 'update-expense',
+        payload: { expense: { id: state.editingId, ...expense } }
+      });
+    } else {
+      dispatch({ type: 'add-expense', payload: { expense } });
+    }
 
     //limpiar formulario
-      setExpense({
-        amount: 0,
-        expenseName: '',
-        category: '',
-        date: new Date()
-      })
+    setExpense({
+      amount: 0,
+      expenseName: '',
+      category: '',
+      date: new Date()
+    });
   };
 
   return (
     <form className='space-y-5 ' onSubmit={handleSubmit}>
       <legend className='uppercase text-center text-2xl font-black border-b-4 border-blue-500 py-2'>
-        Nuevo gasto
+        {state.editingId ? 'Editar Gasto' : 'Añadir Gasto'}
       </legend>
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
@@ -123,7 +139,7 @@ const ExpenseForm = () => {
       <input
         type='submit'
         className='bg-blue-600 cursor-pointer w-full p-2 text-white uppercase font-bold rounded-lg'
-        value={'Añadir Gasto'}
+        value={state.editingId ? 'Editar Gasto' : 'Añadir Gasto'}
       />
     </form>
   );
