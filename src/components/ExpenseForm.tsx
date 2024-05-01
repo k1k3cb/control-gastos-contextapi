@@ -8,6 +8,10 @@ import { DraftExpense, Value } from '../types';
 import ErrorMessage from './ErrorMessage';
 
 const ExpenseForm = () => {
+
+
+
+  
   const [expense, setExpense] = useState<DraftExpense>({
     amount: 0,
     expenseName: '',
@@ -16,8 +20,9 @@ const ExpenseForm = () => {
   });
 
   const [error, setError] = useState('');
+  const [previousAmount, setPreviousAmount] = useState(0);
 
-  const { dispatch, state } = useBudget();
+  const { dispatch, state ,remainingBudget } = useBudget();
 
   useEffect(() => {
     if (state.editingId) {
@@ -25,6 +30,7 @@ const ExpenseForm = () => {
         currentExpense => currentExpense.id === state.editingId
       )[0];
       setExpense(editingExpense);
+      setPreviousAmount(editingExpense.amount);
     }
   }, [state.editingId]);
 
@@ -50,6 +56,13 @@ const ExpenseForm = () => {
       return;
     }
 
+    //validación de  límite de presupuesto
+    if ((expense.amount - previousAmount) > remainingBudget) {
+      setError('El gasto supera el presupuesto restante');
+      return;
+    }
+
+
     //Agregar o actualizar  gasto
     if (state.editingId) {
       dispatch({
@@ -67,6 +80,7 @@ const ExpenseForm = () => {
       category: '',
       date: new Date()
     });
+    setPreviousAmount(0);
   };
 
   return (
